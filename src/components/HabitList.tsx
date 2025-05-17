@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { Plus } from "lucide-react";
+import { Button } from "./ui/button";
 import HabitItem from "./HabitItem";
 
 interface Habit {
@@ -13,15 +15,24 @@ interface Habit {
 interface HabitListProps {
   habits?: Habit[];
   onHabitToggle?: (id: string) => void;
+  onDeleteHabit?: (id: string) => void;
   isPro?: boolean;
+  onAddHabit?: () => void;
 }
 
 const HabitList = ({
   habits = [],
   onHabitToggle = () => {},
+  onDeleteHabit = () => {},
   isPro = false,
+  onAddHabit = () => {},
 }: HabitListProps) => {
   const [localHabits, setLocalHabits] = useState<Habit[]>(habits);
+
+  // Sync localHabits with habits prop when it changes
+  useEffect(() => {
+    setLocalHabits(habits);
+  }, [habits]);
 
   const handleHabitToggle = (id: string) => {
     setLocalHabits((prevHabits) =>
@@ -43,10 +54,29 @@ const HabitList = ({
         transition={{ staggerChildren: 0.1 }}
       >
         {localHabits.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <p>No habits added yet.</p>
-            <p className="mt-2">Add your first micro habit to get started!</p>
-          </div>
+          <motion.div 
+            className="text-center py-12 space-y-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="space-y-2">
+              <h3 className="text-2xl font-semibold">Welcome to MicroHabits!</h3>
+              <p className="text-muted-foreground">Start your journey to better habits today.</p>
+            </div>
+            <div className="p-6 rounded-lg border border-dashed border-primary/50 bg-primary/5">
+              <p className="text-sm text-muted-foreground mb-4">
+                Begin by adding your first micro habit - something small and achievable that you want to do every day.
+              </p>
+              <Button onClick={onAddHabit} className="gap-2">
+                <Plus className="h-5 w-5" />
+                Add Your First Habit
+              </Button>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              <p>Examples: Drink water, Read for 5 minutes, Take vitamins</p>
+            </div>
+          </motion.div>
         ) : (
           localHabits.map((habit) => (
             <HabitItem
@@ -57,6 +87,7 @@ const HabitList = ({
               streak={habit.streak}
               completed={habit.completed}
               onToggle={() => handleHabitToggle(habit.id)}
+              onDelete={onDeleteHabit}
             />
           ))
         )}

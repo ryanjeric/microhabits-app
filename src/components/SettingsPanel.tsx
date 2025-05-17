@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Card,
   CardContent,
@@ -19,27 +19,21 @@ import {
   PaletteIcon,
   CloudIcon,
 } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface SettingsPanelProps {
   isPro?: boolean;
-  onToggleDarkMode?: (isDark: boolean) => void;
-  onToggleNotifications?: (enabled: boolean) => void;
+  onToggleNotifications?: (checked: boolean) => void;
   onUpgradeToPro?: () => void;
 }
 
 const SettingsPanel = ({
   isPro = false,
-  onToggleDarkMode = () => {},
   onToggleNotifications = () => {},
   onUpgradeToPro = () => {},
 }: SettingsPanelProps) => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-
-  const handleDarkModeToggle = (checked: boolean) => {
-    setIsDarkMode(checked);
-    onToggleDarkMode(checked);
-  };
+  const { isDarkMode, toggleDarkMode } = useTheme();
+  const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
 
   const handleNotificationsToggle = (checked: boolean) => {
     setNotificationsEnabled(checked);
@@ -65,7 +59,7 @@ const SettingsPanel = ({
               <Switch
                 id="dark-mode"
                 checked={isDarkMode}
-                onCheckedChange={handleDarkModeToggle}
+                onCheckedChange={toggleDarkMode}
               />
             </div>
 
