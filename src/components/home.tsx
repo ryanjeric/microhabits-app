@@ -24,7 +24,7 @@ const Home: React.FC<HomeProps> = ({
 }) => {
   const { user, loading, signOut } = useAuth();
   const [showAuthForm, setShowAuthForm] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [addHabitDialogOpen, setAddHabitDialogOpen] = useState(false);
   const [habits, setHabits] = useState([
     { id: "1", name: "Drink water", emoji: "💧", completed: false, streak: 5 },
     { id: "2", name: "Meditate", emoji: "🧘", completed: false, streak: 12 },
@@ -140,7 +140,7 @@ const Home: React.FC<HomeProps> = ({
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-md"
         >
-          {isLoading ? (
+          {loading ? (
             <div className="flex justify-center py-12">
               <div className="animate-pulse text-lg">Loading habits...</div>
             </div>
@@ -152,7 +152,7 @@ const Home: React.FC<HomeProps> = ({
             />
           )}
 
-          {showAddHabitPrompt && habits.length === 0 && !isLoading && (
+          {habits.length === 0 && !loading && (
             <div className="mt-8 p-6 border rounded-lg bg-primary/5 text-center">
               <h3 className="text-lg font-medium mb-2">
                 Welcome to MicroHabits!
