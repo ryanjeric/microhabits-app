@@ -17,11 +17,7 @@ interface HabitListProps {
 }
 
 const HabitList = ({
-  habits = [
-    { id: "1", name: "Drink water", emoji: "💧", streak: 5, completed: false },
-    { id: "2", name: "Meditate", emoji: "🧘", streak: 12, completed: true },
-    { id: "3", name: "Read", emoji: "📚", streak: 3, completed: false },
-  ],
+  habits = [],
   onHabitToggle = () => {},
   isPro = false,
 }: HabitListProps) => {

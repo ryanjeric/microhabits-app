@@ -1,12 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Settings, Plus } from "lucide-react";
+import { Settings, Plus, LogOut } from "lucide-react";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 import HabitList from "./HabitList";
 import AddHabitForm from "./AddHabitForm";
 import SettingsPanel from "./SettingsPanel";
+import LandingPage from "./LandingPage";
+import AuthForm from "./AuthForm";
+import AuthLayout from "./AuthLayout";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabaseClient";
 
 interface HomeProps {
   darkMode?: boolean;
@@ -17,6 +22,9 @@ const Home: React.FC<HomeProps> = ({
   darkMode = false,
   onToggleDarkMode = () => {},
 }) => {
+  const { user, loading, signOut } = useAuth();
+  const [showAuthForm, setShowAuthForm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [habits, setHabits] = useState([
     { id: "1", name: "Drink water", emoji: "💧", completed: false, streak: 5 },
     { id: "2", name: "Meditate", emoji: "🧘", completed: false, streak: 12 },
@@ -24,6 +32,14 @@ const Home: React.FC<HomeProps> = ({
   ]);
 
   const [isPro, setIsPro] = useState(false);
+
+  // Load habits from Supabase when user is authenticated
+  useEffect(() => {
+    if (user) {
+      // In a real app, we would fetch habits from Supabase here
+      // For now, we'll use the default habits
+    }
+  }, [user]);
 
   const handleHabitToggle = (id: string) => {
     setHabits(
@@ -50,27 +66,71 @@ const Home: React.FC<HomeProps> = ({
     setIsPro(true);
   };
 
+  const handleGetStarted = () => {
+    setShowAuthForm(true);
+  };
+
+  const handleAuthSuccess = () => {
+    // User is now authenticated via Supabase
+    // The AuthContext will update automatically
+  };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-pulse text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  // Show landing page if not authenticated and not showing auth form
+  if (!user && !showAuthForm) {
+    return <LandingPage onGetStarted={handleGetStarted} />;
+  }
+
+  // Show auth form
+  if (!user && showAuthForm) {
+    return (
+      <AuthLayout>
+        <AuthForm onAuthSuccess={handleAuthSuccess} />
+      </AuthLayout>
+    );
+  }
+
+  // Show main app if authenticated
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Header */}
       <header className="p-4 flex justify-between items-center">
         <h1 className="text-xl font-medium">MicroHabits</h1>
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Settings className="h-5 w-5" />
-              <span className="sr-only">Settings</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent>
-            <SettingsPanel
-              darkMode={darkMode}
-              onToggleDarkMode={onToggleDarkMode}
-              isPro={isPro}
-              onUpgradeToPro={handleUpgradeToPro}
-            />
-          </SheetContent>
-        </Sheet>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={signOut}
+            title="Sign Out"
+          >
+            <LogOut className="h-5 w-5" />
+            <span className="sr-only">Sign Out</span>
+          </Button>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Settings className="h-5 w-5" />
+                <span className="sr-only">Settings</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SettingsPanel
+                darkMode={darkMode}
+                onToggleDarkMode={onToggleDarkMode}
+                isPro={isPro}
+                onUpgradeToPro={handleUpgradeToPro}
+              />
+            </SheetContent>
+          </Sheet>
+        </div>
       </header>
 
       {/* Main Content */}
@@ -80,13 +140,38 @@ const Home: React.FC<HomeProps> = ({
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-md"
         >
-          <HabitList habits={habits} onToggleHabit={handleHabitToggle} />
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <div className="animate-pulse text-lg">Loading habits...</div>
+            </div>
+          ) : (
+            <HabitList
+              habits={habits}
+              onHabitToggle={handleHabitToggle}
+              isPro={isPro}
+            />
+          )}
+
+          {showAddHabitPrompt && habits.length === 0 && !isLoading && (
+            <div className="mt-8 p-6 border rounded-lg bg-primary/5 text-center">
+              <h3 className="text-lg font-medium mb-2">
+                Welcome to MicroHabits!
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                Get started by adding your first habit to track.
+              </p>
+              <Button onClick={() => setAddHabitDialogOpen(true)}>
+                <Plus className="h-5 w-5 mr-2" />
+                Add Your First Habit
+              </Button>
+            </div>
+          )}
         </motion.div>
       </main>
 
       {/* Footer */}
       <footer className="p-4 flex justify-center">
-        <Dialog>
+        <Dialog open={addHabitDialogOpen} onOpenChange={setAddHabitDialogOpen}>
           <DialogTrigger asChild>
             <Button
               variant="outline"
@@ -99,10 +184,11 @@ const Home: React.FC<HomeProps> = ({
           </DialogTrigger>
           <DialogContent>
             <AddHabitForm
-              onAddHabit={handleAddHabit}
+              open={addHabitDialogOpen}
+              onOpenChange={setAddHabitDialogOpen}
+              onSave={handleAddHabit}
               isPro={isPro}
               habitCount={habits.length}
-              onUpgradeToPro={handleUpgradeToPro}
             />
           </DialogContent>
         </Dialog>
